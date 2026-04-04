@@ -14,6 +14,9 @@ Developed by **Shaysters**, with the assistance of Claude (Anthropic) and Codex 
 |----------|--------------|
 | Windows | NVDA |
 | Windows | JAWS |
+| Windows | Window-Eyes |
+| Windows | System Access |
+| Windows | ZoomText |
 | Windows | Windows SAPI (automatic fallback) |
 | Linux | Orca (via speech-dispatcher) |
 

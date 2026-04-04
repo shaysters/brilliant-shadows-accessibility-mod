@@ -7,7 +7,8 @@ Developed by Shaysters, with the assistance of Claude (Anthropic) and Codex (Ope
 to add full text-to-speech support and make the game fully playable for blind users.
 
 Supported screen readers:
-  Windows: NVDA, JAWS, or Windows SAPI (automatic fallback)
+  Windows: NVDA, JAWS, Window-Eyes, System Access, ZoomText (via Tolk),
+           or Windows SAPI (automatic fallback)
   Linux:   Orca (via speech-dispatcher)
 
 ----------------------------------------------------------------
