@@ -7,7 +7,7 @@ Developed by Shaysters, with the assistance of Claude (Anthropic) and Codex (Ope
 to add full text-to-speech support and make the game fully playable for blind users.
 
 Supported screen readers:
-  Windows: NVDA, JAWS, Window-Eyes, System Access, ZoomText (via Tolk),
+  Windows: NVDA, JAWS and other screen readers (via Prism),
            or Windows SAPI (automatic fallback)
   Linux:   Orca (via speech-dispatcher)
 
@@ -59,4 +59,11 @@ Notes
   design. Press R at any time to hear the last line again.
 
 - Your saves are not affected. This mod does not touch the game's story files.
+
+- If you installed an earlier version, you can delete Tolk.dll,
+  nvdaControllerClient32.dll and nvdaControllerClient64.dll from the
+  game folder. They are no longer used.
+
+- Prism (prism.dll) is licensed under the Mozilla Public License 2.0.
+  See the prism_licenses folder.
 

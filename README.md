@@ -10,14 +10,12 @@ Developed by **Shaysters**, with the assistance of Claude (Anthropic) and Codex 
 
 ## Supported Screen Readers
 
-| Platform | Screen Reader |
+On Windows, speech goes through Prism, which picks whatever is running.
+
+| Platform | Speech output |
 |----------|--------------|
-| Windows | NVDA |
-| Windows | JAWS |
-| Windows | Window-Eyes |
-| Windows | System Access |
-| Windows | ZoomText |
-| Windows | Windows SAPI (automatic fallback) |
+| Windows | NVDA, JAWS and other screen readers supported by Prism |
+| Windows | Windows SAPI (automatic fallback when no screen reader is running) |
 | Linux | Orca (via speech-dispatcher) |
 
 ---
@@ -54,3 +52,4 @@ Volume and text speed are adjustable from the Preferences screen using the Left 
 
 - The game does not include a built-in rewind system — this is by the developers' design. Press R to re-hear the last line.
 - Your saves are not affected. This mod does not touch the game's story files.
+- Prism (`prism.dll`) is licensed under the Mozilla Public License 2.0. Its license and the licenses of the libraries it uses are in the `prism_licenses` folder.
