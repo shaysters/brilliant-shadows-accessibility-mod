@@ -1,10 +1,12 @@
-# Brilliant Shadows Accessibility Mod — Version 1.1.0
+# Brilliant Shadows Accessibility Mod — Version 1.1.1
 
 An accessibility mod adding full text-to-speech support to make
 [Brilliant Shadows - Part One of the Book of Gray Magic](https://store.steampowered.com/app/409920/Brilliant_Shadows__Part_One_of_the_Book_of_Gray_Magic/)
 fully playable for blind users.
 
 Developed by **Shaysters**, with the assistance of Claude (Anthropic) and Codex (OpenAI).
+
+See [CHANGELOG.md](CHANGELOG.md) for what changed in each version.
 
 ---
 
@@ -73,8 +75,10 @@ If you ever installed version 1.0, it replaced the game's `screens.rpy`. To put 
 | Page Down | Roll forward |
 | Ctrl (hold) | Skip through already-seen lines |
 | Tab | Toggle skipping on and off |
+| Q | In-scene buttons: Rewind, Skip and Pause menu (during the story) |
+| F1 | Accessibility settings (in the story and in menus) |
 | F | Toggle fullscreen / windowed |
-| H | Hide or show the text window |
+| H | Hide the text window. H, Enter or Space shows it again |
 | S | Take a screenshot |
 | Delete | Delete selected save slot (on save screen) |
 | Escape | Open the pause menu |
@@ -82,14 +86,34 @@ If you ever installed version 1.0, it replaced the game's `screens.rpy`. To put 
 
 Volume and text speed are adjustable from the Preferences screen using the Left and Right arrow keys.
 
+When a prompt or the pause menu closes, the mod says what you were on before it opened.
+
+---
+
+## Settings
+
+Press F1 in the story or in any menu. Up and Down choose a setting, Left, Right or Enter change it, and Escape closes the list. Settings are saved automatically.
+
+- **Read voice acted lines** (off by default). When off, lines that have voice acting are not read, so the screen reader doesn't talk over the actors. Narration is always read, and R repeats any line.
+- **Speech output** says whether Prism found NVDA, JAWS or another screen reader, or is using Windows' voice.
+
+---
+
+## Troubleshooting
+
+The mod writes `a11y_log.txt` next to `Brilliant Shadows.exe`. It says which speech output Prism found and records any errors. Please include it when you report a problem.
+
+- **No music after updating from 1.0:** version 1.0's music slider didn't change the game's real music volume. 1.1.1 moves the level you chose to the real setting the first time it starts. Check Music volume in Preferences.
+- **Keys stop working after Alt+Tab:** the mod clears a stuck Alt key by itself within a moment. If keys still don't respond, press and release Alt once.
+
 ---
 
 ## Notes
 
-- The game does not include a built-in rewind system — this is by the developers' design. Press R to re-hear the last line.
-- Voice-acted lines are not read aloud, so the screen reader does not talk over the actors. Narration is always read, and R repeats any line.
+- Page Up, or Rewind in the Q menu, goes back one line. On the very first line of the story this returns to the main menu, as the game's own rewind button does. Press R to hear the current line again.
+- Voice-acted lines are not read aloud unless you turn them on in the F1 settings. Narration is always read, and R repeats any line.
 - Your saves are not affected. This mod does not touch the game's story files.
-- Prism (`prism.dll`) is licensed under the Mozilla Public License 2.0. Its license and the licenses of the libraries it uses are in the `prism_licenses` folder.
+- Prism (`prism.dll`), by Ethin Probst, is licensed under the Mozilla Public License 2.0. Its license and the licenses of the libraries it uses are in the `prism_licenses` folder.
 - The installer is built with [Loadstone](https://github.com/bradjrenshaw/loadstone) by Bradley Renshaw.
 
 ---

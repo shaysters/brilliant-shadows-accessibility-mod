@@ -464,9 +464,9 @@ init -100 python:
         if (not nvda_active) and who:
             return
 
-        # Skip voiced speaker lines to avoid duplicating voice-acted dialogue.
-        # Narration/thought lines (no speaker) are still read.
-        if _a11y_voice_playing() and who:
+        # Skip voiced speaker lines to avoid duplicating voice-acted dialogue,
+        # unless turned on in the F1 settings. Narration is always read.
+        if _a11y_voice_playing() and who and not persistent.a11y_read_voiced:
             return
 
         if nvda_active:
@@ -1035,18 +1035,13 @@ init -100 python:
             pass
 
     def a11y_toggle_interface():
+        # HideInterface waits until H, Enter, Space or a click, then returns.
         try:
-            hidden = getattr(store._a11y_state, "_interface_hidden", False)
-            if hidden:
-                _a11y_run(ShowInterface())
-                store._a11y_state._interface_hidden = False
-                _a11y_speak_now("Text visible.")
-            else:
-                _a11y_run(HideInterface())
-                store._a11y_state._interface_hidden = True
-                _a11y_speak_now("Text hidden. Press H to show again.")
+            _a11y_speak_now("Text hidden. Press H, Enter or Space to show it again.")
+            _a11y_run(HideInterface())
+            _a11y_speak_now("Text visible.")
         except Exception:
-            pass
+            _a11y_log_exc("a11y_toggle_interface")
 
     def a11y_screenshot():
         try:
@@ -1090,12 +1085,14 @@ screen brilliant_shadows_a11y_hotkeys():
     zorder 200
 
     # Keep backend policy synchronized after startup as preferences become available.
-    timer 0.50 repeat True action Function(_a11y_apply_backend_policy)
+    timer 0.50 repeat True action [Function(_a11y_apply_backend_policy), Function(_a11y_reread_check)]
 
     key "K_r" action Function(a11y_repeat_last)
     key "K_f" action Function(a11y_toggle_fullscreen)
     key "K_h" action Function(a11y_toggle_interface)
     key "K_s" action Function(a11y_screenshot)
+    key "K_q" action Show("bs_a11y_popup", kind="scene")
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
     key "alt_K_F4" action Function(a11y_open_quit_prompt, True)
     key "quit" action Function(a11y_open_quit_prompt, True)
 
@@ -1103,3 +1100,198 @@ screen brilliant_shadows_a11y_hotkeys():
 init 999 python:
     if "brilliant_shadows_a11y_hotkeys" not in config.overlay_screens:
         config.overlay_screens.append("brilliant_shadows_a11y_hotkeys")
+
+
+# ---------------------------------------------------------------------------
+# Settings, saved volumes and keyboard safety.
+# ---------------------------------------------------------------------------
+
+init 1 python:
+    if persistent.a11y_read_voiced is None:
+        persistent.a11y_read_voiced = False
+
+    # Version 1.0 stored its volume sliders in fields the game never used, so
+    # the real volumes stayed where they were. Apply what the player chose
+    # there once, then remove the old fields.
+    for _a11y_old, _a11y_mixer in (("music_volume", "music"), ("sound_volume", "sfx"), ("voice_volume", "voice")):
+        if _a11y_old in _preferences.__dict__:
+            try:
+                _preferences.set_volume(_a11y_mixer, float(_preferences.__dict__.pop(_a11y_old)))
+                _a11y_log("Moved old {0} setting to the {1} volume.".format(_a11y_old, _a11y_mixer))
+            except Exception:
+                _a11y_log_exc("volume migration")
+
+    def _a11y_reset_channel_volumes():
+        # Version 1.0 also lowered the music channel itself, which is kept in
+        # save files. Reset it so only the Preferences volume applies.
+        for channel in ("music", "am2"):
+            try:
+                renpy.music.set_volume(1.0, channel=channel)
+            except Exception:
+                pass
+
+    config.after_load_callbacks.append(_a11y_reset_channel_volumes)
+
+    # Alt+Tab or Alt+F4 can leave SDL thinking Alt is still held, and then
+    # every plain key is ignored. Clear any modifier no key is holding down.
+    import pygame_sdl2 as _a11y_pygame
+
+    _A11Y_MODIFIERS = (
+        ((_a11y_pygame.K_LALT, _a11y_pygame.K_RALT), _a11y_pygame.KMOD_ALT),
+        ((_a11y_pygame.K_LCTRL, _a11y_pygame.K_RCTRL), _a11y_pygame.KMOD_CTRL),
+        ((_a11y_pygame.K_LSHIFT, _a11y_pygame.K_RSHIFT), _a11y_pygame.KMOD_SHIFT),
+        ((_a11y_pygame.K_LGUI, _a11y_pygame.K_RGUI), _a11y_pygame.KMOD_META),
+    )
+    _A11Y_ALL_MODIFIERS = (_a11y_pygame.KMOD_ALT | _a11y_pygame.KMOD_CTRL |
+                           _a11y_pygame.KMOD_SHIFT | _a11y_pygame.KMOD_META)
+
+    def _a11y_unstick_modifiers():
+        try:
+            mods = _a11y_pygame.key.get_mods()
+            if not mods & _A11Y_ALL_MODIFIERS:
+                return
+            pressed = _a11y_pygame.key.get_pressed()
+            held = 0
+            for keys, flag in _A11Y_MODIFIERS:
+                if any(pressed[k] for k in keys):
+                    held |= mods & flag
+            if held != mods & _A11Y_ALL_MODIFIERS:
+                _a11y_pygame.key.set_mods((mods & ~_A11Y_ALL_MODIFIERS) | held)
+        except Exception:
+            pass
+
+    config.periodic_callbacks.append(_a11y_unstick_modifiers)
+
+    # -----------------------------------------------------------------------
+    # Saying what was selected when a prompt or menu closes, the way a
+    # screen reader returns focus.
+    # -----------------------------------------------------------------------
+
+    store.a11y_reread_pending = False
+
+    def a11y_after_prompt():
+        try:
+            menu = _a11y_current_menu()
+            if menu == "preferences":
+                a11y_pref_announce(getattr(store, "a11y_pref_index", 0))
+                return
+            if menu is not None and menu != "yesno_prompt":
+                labels = _a11y_menu_labels(menu)
+                var_name = _a11y_menu_var(menu)
+                if labels and var_name:
+                    idx = getattr(store, var_name, 0)
+                    if 0 <= idx < len(labels):
+                        _a11y_speak_now(labels[idx])
+                        return
+            if renpy.get_screen("say") is not None and store._a11y_state.last_story_text:
+                _a11y_speak_now(store._a11y_state.last_story_text)
+        except Exception:
+            _a11y_log_exc("a11y_after_prompt")
+
+    def a11y_mark_return():
+        # Leaving the pause menu for the story: read the current line once back.
+        if not renpy.context()._main_menu:
+            store.a11y_reread_pending = True
+
+    def _a11y_reread_check():
+        # Called from the story hotkey overlay's timer.
+        if store.a11y_reread_pending:
+            store.a11y_reread_pending = False
+            if renpy.get_screen("say") is not None and store._a11y_state.last_story_text:
+                _a11y_speak_now(store._a11y_state.last_story_text)
+
+    # -----------------------------------------------------------------------
+    # Q: the in-scene buttons. F1: accessibility settings.
+    # -----------------------------------------------------------------------
+
+    store.a11y_popup_index = 0
+
+    def _a11y_voiced_label():
+        return "Read voice acted lines: {0}.".format("on" if persistent.a11y_read_voiced else "off")
+
+    def _a11y_voiced_toggle(delta=1):
+        persistent.a11y_read_voiced = not persistent.a11y_read_voiced
+        _a11y_speak_now(_a11y_voiced_label())
+
+    def _a11y_speech_label():
+        p = store._a11y_state.provider
+        return "Speech output: {0}.".format(p.name if p.available else "Ren'Py text to speech")
+
+    def _a11y_scene_press(action):
+        def run():
+            renpy.hide_screen("bs_a11y_popup")
+            return _a11y_run(action)
+        return run
+
+    def _a11y_popup_items(menu):
+        # Each item is (label function, Enter function, Left/Right function).
+        if menu == "settings":
+            return [
+                (_a11y_voiced_label, _a11y_voiced_toggle, _a11y_voiced_toggle),
+                (_a11y_speech_label, None, None),
+                (lambda: "Close", a11y_popup_close, None),
+            ]
+        return [
+            (lambda: "Rewind. Go back one line.", _a11y_scene_press(Rollback()), None),
+            (lambda: "Skip. Fast forward through lines you have read.", _a11y_scene_press(Skip()), None),
+            (lambda: "Pause menu.", _a11y_scene_press(ShowMenu("esc_menu", transition=dissolve)), None),
+            (lambda: "Close", a11y_popup_close, None),
+        ]
+
+    def a11y_popup_open(menu):
+        store.a11y_popup_index = 0
+        title = "Accessibility settings." if menu == "settings" else "In-scene buttons."
+        _a11y_speak_now("{0} {1}".format(title, _a11y_popup_items(menu)[0][0]()))
+
+    def a11y_popup_move(menu, delta):
+        items = _a11y_popup_items(menu)
+        store.a11y_popup_index = (store.a11y_popup_index + delta) % len(items)
+        _a11y_speak_now(items[store.a11y_popup_index][0]())
+
+    def a11y_popup_adjust(menu, delta):
+        item = _a11y_popup_items(menu)[store.a11y_popup_index]
+        if item[2] is None:
+            return a11y_popup_move(menu, delta)
+        item[2](delta)
+
+    def a11y_popup_activate(menu):
+        item = _a11y_popup_items(menu)[store.a11y_popup_index]
+        if item[1] is None:
+            _a11y_speak_now(item[0]())
+            return
+        if menu == "scene" and store.a11y_popup_index == 0 and not renpy.can_rollback():
+            _a11y_speak_now("Unavailable. There is no earlier line to go back to.")
+            return
+        return item[1]()
+
+    def a11y_popup_close():
+        renpy.hide_screen("bs_a11y_popup")
+        a11y_after_prompt()
+
+
+screen bs_a11y_popup(kind):
+    modal True
+    zorder 300
+
+    frame:
+        xalign 0.5
+        yalign 0.5
+        xpadding 30
+        ypadding 30
+        has vbox
+        text ("Accessibility settings" if kind == "settings" else "In-scene buttons")
+        text "Up and Down choose, Enter selects, Escape closes." size 20
+
+    on "show" action Function(a11y_popup_open, kind)
+    key "K_UP" action Function(a11y_popup_move, kind, -1)
+    key "K_DOWN" action Function(a11y_popup_move, kind, 1)
+    key "K_LEFT" action Function(a11y_popup_adjust, kind, -1)
+    key "K_RIGHT" action Function(a11y_popup_adjust, kind, 1)
+    key "K_RETURN" action Function(a11y_popup_activate, kind)
+    key "K_KP_ENTER" action Function(a11y_popup_activate, kind)
+    key "K_SPACE" action Function(a11y_popup_activate, kind)
+    key "dismiss" action Function(a11y_popup_activate, kind)
+    key "K_ESCAPE" action Function(a11y_popup_close)
+    key "game_menu" action Function(a11y_popup_close)
+    key "K_q" action Function(a11y_popup_close)
+    key "K_F1" action Function(a11y_popup_close)

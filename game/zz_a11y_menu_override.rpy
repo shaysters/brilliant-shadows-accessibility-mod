@@ -134,18 +134,16 @@ init -95 python:
         "Back",
     )
     _A11Y_PREF_SLIDERS = frozenset((8, 9, 10, 11))
+    # Preference items 9-11 and the Ren'Py mixer each one controls.
+    _A11Y_PREF_MIXERS = {9: "music", 10: "sfx", 11: "voice"}
 
     def _a11y_pref_value(idx):
         try:
             if idx == 8:
                 cps = getattr(preferences, "text_cps", 0)
                 return "Instant" if cps == 0 else "{0} characters per second".format(int(cps))
-            if idx == 9:
-                return "{0} percent".format(int(round(getattr(preferences, "music_volume", 1.0) * 100)))
-            if idx == 10:
-                return "{0} percent".format(int(round(getattr(preferences, "sound_volume", 1.0) * 100)))
-            if idx == 11:
-                return "{0} percent".format(int(round(getattr(preferences, "voice_volume", 1.0) * 100)))
+            if idx in _A11Y_PREF_MIXERS:
+                return "{0} percent".format(int(round(_preferences.get_volume(_A11Y_PREF_MIXERS[idx]) * 100)))
         except Exception:
             pass
         return None
@@ -178,22 +176,10 @@ init -95 python:
                 else:
                     cps = max(0, cps - 10)
                 preferences.text_cps = cps
-            elif idx == 9:
-                vol = round(max(0.0, min(1.0, getattr(preferences, "music_volume", 1.0) + delta * 0.1)), 1)
-                preferences.music_volume = vol
-                try:
-                    renpy.music.set_volume(vol, channel="music")
-                except Exception:
-                    try:
-                        renpy.music.set_volume(vol, "music")
-                    except Exception:
-                        pass
-            elif idx == 10:
-                vol = round(max(0.0, min(1.0, getattr(preferences, "sound_volume", 1.0) + delta * 0.1)), 1)
-                preferences.sound_volume = vol
-            elif idx == 11:
-                vol = round(max(0.0, min(1.0, getattr(preferences, "voice_volume", 1.0) + delta * 0.1)), 1)
-                preferences.voice_volume = vol
+            elif idx in _A11Y_PREF_MIXERS:
+                mixer = _A11Y_PREF_MIXERS[idx]
+                vol = round(max(0.0, min(1.0, _preferences.get_volume(mixer) + delta * 0.1)), 1)
+                _preferences.set_volume(mixer, vol)
         except Exception:
             pass
         a11y_pref_announce(idx)
@@ -235,6 +221,7 @@ init -93 python:
 screen a11y_main_menu:
     tag menu
     modal True
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
 
     add Solid("#111")
 
@@ -279,6 +266,7 @@ screen main_menu:
 screen esc_menu:
     tag menu
     modal True
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
     default a11y_esc_announced = False
 
     add Solid("#111c")
@@ -292,7 +280,7 @@ screen esc_menu:
         spacing 12
 
         textbutton ("Resume" if a11y_esc_index != 0 else "> Resume"):
-            action Return()
+            action [Function(a11y_mark_return), Return()]
         textbutton ("Save" if a11y_esc_index != 1 else "> Save"):
             action ShowMenu("save")
         textbutton ("Load" if a11y_esc_index != 2 else "> Load"):
@@ -307,13 +295,13 @@ screen esc_menu:
     on "show" action SetVariable("a11y_esc_index", 0)
     if not a11y_esc_announced:
         timer 0.10 action [SetScreenVariable("a11y_esc_announced", True), Function(a11y_pause_intro)]
-    key "game_menu" action Return()
+    key "game_menu" action [Function(a11y_mark_return), Return()]
     key "K_UP" action Function(a11y_move, "a11y_esc_index", ("Resume", "Save", "Load", "Preferences", "Main Menu", "Quit"), -1)
     key "K_DOWN" action Function(a11y_move, "a11y_esc_index", ("Resume", "Save", "Load", "Preferences", "Main Menu", "Quit"), 1)
     key "K_LEFT" action Function(a11y_move, "a11y_esc_index", ("Resume", "Save", "Load", "Preferences", "Main Menu", "Quit"), -1)
     key "K_RIGHT" action Function(a11y_move, "a11y_esc_index", ("Resume", "Save", "Load", "Preferences", "Main Menu", "Quit"), 1)
-    key "K_RETURN" action If(a11y_esc_index == 0, Return(), If(a11y_esc_index == 1, ShowMenu("save"), If(a11y_esc_index == 2, ShowMenu("load"), If(a11y_esc_index == 3, ShowMenu("preferences"), If(a11y_esc_index == 4, MainMenu(), Function(a11y_open_quit_prompt))))))
-    key "K_KP_ENTER" action If(a11y_esc_index == 0, Return(), If(a11y_esc_index == 1, ShowMenu("save"), If(a11y_esc_index == 2, ShowMenu("load"), If(a11y_esc_index == 3, ShowMenu("preferences"), If(a11y_esc_index == 4, MainMenu(), Function(a11y_open_quit_prompt))))))
+    key "K_RETURN" action If(a11y_esc_index == 0, [Function(a11y_mark_return), Return()], If(a11y_esc_index == 1, ShowMenu("save"), If(a11y_esc_index == 2, ShowMenu("load"), If(a11y_esc_index == 3, ShowMenu("preferences"), If(a11y_esc_index == 4, MainMenu(), Function(a11y_open_quit_prompt))))))
+    key "K_KP_ENTER" action If(a11y_esc_index == 0, [Function(a11y_mark_return), Return()], If(a11y_esc_index == 1, ShowMenu("save"), If(a11y_esc_index == 2, ShowMenu("load"), If(a11y_esc_index == 3, ShowMenu("preferences"), If(a11y_esc_index == 4, MainMenu(), Function(a11y_open_quit_prompt))))))
 
 
 init python:
@@ -323,6 +311,7 @@ init python:
 screen save:
     tag menu
     modal True
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
 
     add Solid("#101218")
 
@@ -365,6 +354,7 @@ screen save:
 screen load:
     tag menu
     modal True
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
 
     add Solid("#101218")
 
@@ -406,6 +396,7 @@ screen load:
 screen preferences:
     tag menu
     modal True
+    key "K_F1" action Show("bs_a11y_popup", kind="settings")
 
     add Solid("#101218")
 
@@ -485,20 +476,20 @@ screen yesno_prompt:
         textbutton ("Yes" if a11y_yesno_index != 0 else "> Yes"):
             action yes_action
         textbutton ("No" if a11y_yesno_index != 1 else "> No"):
-            action no_action
+            action [no_action, Function(a11y_after_prompt)]
     # Ignore repeated Alt+F4 while this prompt is open.
     key "alt_K_F4" action NullAction()
 
     on "show" action [SetVariable("a11y_yesno_index", 0), Function(a11y_quit_intro, _(message))]
     if not a11y_nvda_active():
         timer 1.20 action Function(a11y_yesno_announce_default)
-    key "game_menu" action no_action
-    key "K_ESCAPE" action [Function(a11y_speak_label, "No"), no_action]
+    key "game_menu" action [no_action, Function(a11y_after_prompt)]
+    key "K_ESCAPE" action [no_action, Function(a11y_after_prompt)]
     key "K_UP" action Function(a11y_move, "a11y_yesno_index", ("Yes", "No"), -1)
     key "K_DOWN" action Function(a11y_move, "a11y_yesno_index", ("Yes", "No"), 1)
     key "K_LEFT" action Function(a11y_move, "a11y_yesno_index", ("Yes", "No"), -1)
     key "K_RIGHT" action Function(a11y_move, "a11y_yesno_index", ("Yes", "No"), 1)
-    key "K_RETURN" action If(a11y_yesno_index == 0, yes_action, no_action)
-    key "K_KP_ENTER" action If(a11y_yesno_index == 0, yes_action, no_action)
-    key "dismiss" action If(a11y_yesno_index == 0, yes_action, no_action)
-    key "button_select" action If(a11y_yesno_index == 0, yes_action, no_action)
+    key "K_RETURN" action If(a11y_yesno_index == 0, yes_action, [no_action, Function(a11y_after_prompt)])
+    key "K_KP_ENTER" action If(a11y_yesno_index == 0, yes_action, [no_action, Function(a11y_after_prompt)])
+    key "dismiss" action If(a11y_yesno_index == 0, yes_action, [no_action, Function(a11y_after_prompt)])
+    key "button_select" action If(a11y_yesno_index == 0, yes_action, [no_action, Function(a11y_after_prompt)])

@@ -14,7 +14,8 @@ $files = @(
     "game\zz_a11y_menu_override.rpy",
     "prism.dll",
     "prism_licenses",
-    "README.txt"
+    "README.txt",
+    "CHANGELOG.md"
 )
 
 $dist = Join-Path $root "dist"
