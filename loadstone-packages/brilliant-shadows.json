@@ -1,0 +1,18 @@
+{
+  "manifestVersion": 1,
+  "kind": "game",
+  "id": "brilliant-shadows",
+  "name": "Brilliant Shadows - Part One of the Book of Gray Magic",
+  "detect": {
+    "steam": {
+      "appId": 409920,
+      "dirName": "Brilliant Shadows"
+    },
+    "markers": [
+      "Brilliant Shadows.exe"
+    ]
+  },
+  "userData": {
+    "windows": "${appData}/RenPy/BrilliantShadows"
+  }
+}

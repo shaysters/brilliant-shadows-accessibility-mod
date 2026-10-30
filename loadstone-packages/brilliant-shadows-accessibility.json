@@ -1,0 +1,78 @@
+{
+  "manifestVersion": 1,
+  "id": "brilliant-shadows-accessibility",
+  "name": "Brilliant Shadows Accessibility",
+  "description": "Screen reader and text-to-speech accessibility for Brilliant Shadows - Part One of the Book of Gray Magic. Reads dialogue, narration, choices and menus, and makes every menu usable from the keyboard.",
+  "authors": [
+    "Shaysters",
+    "Claude",
+    "Codex"
+  ],
+  "game": "brilliant-shadows",
+  "distributions": {
+    "steam": "supported"
+  },
+  "channels": {
+    "stable": {
+      "source": "release"
+    }
+  },
+  "install": [
+    {
+      "step": "extract-archive",
+      "routes": [
+        {
+          "from": "game/**",
+          "to": "${gameDir}/game"
+        },
+        {
+          "from": "prism.dll",
+          "to": "${gameDir}/prism.dll"
+        },
+        {
+          "from": "prism_licenses/**",
+          "to": "${gameDir}/prism_licenses"
+        }
+      ]
+    },
+    {
+      "step": "expect",
+      "checks": [
+        {
+          "fileExists": "${gameDir}/game/brilliant_shadows_accessibility.rpy",
+          "message": "The download didn't contain the mod (no brilliant_shadows_accessibility.rpy)."
+        },
+        {
+          "fileExists": "${gameDir}/prism.dll",
+          "message": "The download didn't contain the speech library (no prism.dll)."
+        }
+      ]
+    }
+  ],
+  "uninstall": [
+    {
+      "step": "notice",
+      "message": "If you ever installed version 1.0 of this mod by hand, it replaced the game's screens.rpy. To put the original back, use Steam: right click Brilliant Shadows, choose Properties, then Installed Files, then Verify integrity of game files."
+    }
+  ],
+  "cleanupLegacy": [
+    "${gameDir}/Tolk.dll",
+    "${gameDir}/nvdaControllerClient32.dll",
+    "${gameDir}/nvdaControllerClient64.dll",
+    "${gameDir}/game/Tolk.dll",
+    "${gameDir}/game/nvdaControllerClient32.dll",
+    "${gameDir}/game/nvdaControllerClient64.dll",
+    "${gameDir}/game/brilliant_shadows_accessibility.rpyc",
+    "${gameDir}/game/brilliant_shadows_accessibility_example_patches.rpy",
+    "${gameDir}/game/brilliant_shadows_accessibility_example_patches.rpyc",
+    "${gameDir}/game/screens_a11y.rpyc",
+    "${gameDir}/game/zz_a11y_menu_override.rpyc"
+  ],
+  "packaging": {
+    "artifacts": [
+      {
+        "file": "../dist/BrilliantShadowsAccessibility.zip"
+      }
+    ]
+  }
+}

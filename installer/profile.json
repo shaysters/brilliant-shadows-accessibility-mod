@@ -1,0 +1,9 @@
+{
+  "mode": "single-mod",
+  "mod": "brilliant-shadows-accessibility",
+  "title": "Brilliant Shadows Accessibility Installer",
+  "registries": [
+    "github:shaysters/brilliant-shadows-accessibility-mod"
+  ],
+  "lockRegistries": true
+}

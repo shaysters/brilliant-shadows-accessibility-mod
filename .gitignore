@@ -3,3 +3,4 @@ nvdaControllerClient32.dll
 nvdaControllerClient64.dll
 *.rpyc
 a11y_log.txt
+dist/
