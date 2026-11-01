@@ -1,10 +1,13 @@
-Brilliant Shadows Accessibility Mod - Version 1.1.1
+Brilliant Shadows Accessibility Mod - Version 1.1.2
 
 Brilliant Shadows - Part One of the Book of Gray Magic is available on Steam:
 https://store.steampowered.com/app/409920/Brilliant_Shadows__Part_One_of_the_Book_of_Gray_Magic/
 
 Developed by Shaysters, with the assistance of Claude (Anthropic) and Codex (OpenAI),
 to add full text-to-speech support and make the game fully playable for blind users.
+
+Join the Discord to chat, get help or report problems: https://discord.gg/KNDXhztGGK
+Support shaysters on Ko-fi: https://ko-fi.com/shaysters
 
 Supported screen readers:
   Windows: NVDA, JAWS and other screen readers (via Prism),

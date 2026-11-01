@@ -10,7 +10,9 @@
   ],
   "game": "brilliant-shadows",
   "distributions": {
-    "steam": "supported"
+    "steam": "supported",
+    "itch": "untested",
+    "standalone": "untested"
   },
   "channels": {
     "stable": {

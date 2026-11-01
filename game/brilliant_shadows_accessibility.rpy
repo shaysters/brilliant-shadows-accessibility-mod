@@ -1103,6 +1103,103 @@ init 999 python:
 
 
 # ---------------------------------------------------------------------------
+# Update check. Once per game start, asks GitHub for the latest release and
+# says so if it's newer than this version. Reads the release manifest the
+# installer itself uses (a plain redirect, no API token or rate limit).
+# This Python has no SSL support, so the request goes through Windows' own
+# curl.exe in the background, polled from a periodic callback. Nothing is
+# sent except the request itself, and a failed check is only logged.
+# ---------------------------------------------------------------------------
+
+init 2 python:
+    A11Y_VERSION = "1.1.2"
+    _A11Y_UPDATE_URL = "https://github.com/shaysters/brilliant-shadows-accessibility-mod/releases/latest/download/loadstone-release.json"
+    # The announcement waits for the main menu and this much silence, so it
+    # neither cuts off the opening speech nor gets cut off by it.
+    _A11Y_UPDATE_QUIET = 2.0
+
+    _a11y_update = {"proc": None, "latest": None, "done": False}
+    _a11y_last_speech = [time.time()]
+
+    def _a11y_track_speech(provider):
+        # Note when anything is spoken, so the update notice can wait for a pause.
+        orig = provider.speak
+        def speak(*args, **kwargs):
+            _a11y_last_speech[0] = time.time()
+            return orig(*args, **kwargs)
+        provider.speak = speak
+
+    try:
+        _a11y_track_speech(store._a11y_state.provider)
+    except Exception:
+        _a11y_log_exc("update check speech tracking")
+
+    def _a11y_update_announce(latest):
+        text = "Brilliant Shadows Accessibility version {0} is available. Run the installer to update.".format(latest)
+        st = store._a11y_state
+        _a11y_log("Update announced.")
+        # R repeats it until the story starts.
+        if not st.last_story_text:
+            st.last_story_text = text
+        p = st.provider
+        if p and p.available and getattr(p, "_dll", None):
+            p._dll.prism_backend_output(p._backend, text.encode("utf-8"), False)
+        else:
+            _a11y_speak_now(text)
+
+    def _a11y_version_tuple(s):
+        try:
+            return tuple(int(p) for p in s.split("."))
+        except Exception:
+            return None
+
+    def _a11y_update_tick():
+        u = _a11y_update
+        if u["done"]:
+            return
+        try:
+            if u["latest"]:
+                # A newer version was found; announce it at the main menu after a pause.
+                if renpy.get_screen("a11y_main_menu") and time.time() - _a11y_last_speech[0] >= _A11Y_UPDATE_QUIET:
+                    u["done"] = True
+                    _a11y_update_announce(u["latest"])
+                return
+            if u["proc"] is None:
+                curl =os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32", "curl.exe")
+                if not os.path.exists(curl):
+                    curl = "curl"
+                import subprocess
+                startupinfo = None
+                if hasattr(subprocess, "STARTUPINFO"):
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= 1  # STARTF_USESHOWWINDOW: keep the console hidden
+                u["proc"] = subprocess.Popen(
+                    [curl, "-s", "-L", "--max-time", "15", _A11Y_UPDATE_URL],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=startupinfo)
+                return
+            if u["proc"].poll() is None:
+                return
+            out = u["proc"].stdout.read()
+            m = re.search(r'"version"\s*:\s*"v?([0-9.]+)"', out or "")
+            if not m:
+                u["done"] = True
+                _a11y_log("Update check skipped (exit code {0}).".format(u["proc"].returncode))
+                return
+            latest = m.group(1)
+            _a11y_log("Update check: installed {0}, latest {1}".format(A11Y_VERSION, latest))
+            lv, iv = _a11y_version_tuple(latest), _a11y_version_tuple(A11Y_VERSION)
+            if lv and iv and lv > iv:
+                u["latest"] = latest
+            else:
+                u["done"] = True
+        except Exception:
+            u["done"] = True
+            _a11y_log_exc("update check")
+
+    config.periodic_callbacks.append(_a11y_update_tick)
+
+
+# ---------------------------------------------------------------------------
 # Settings, saved volumes and keyboard safety.
 # ---------------------------------------------------------------------------
 

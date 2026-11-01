@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.2
+
+- Added: when the main menu has been read, the mod tells you if a newer version is out. Run the installer to update. r repeats the message until the story starts.
+- Changed: The installer accepts itch.io and DRM-free copies of the game. It doesn't find them by itself, so use Browse to pick the game folder. The mod has only been tested with the Steam version, and the installer says so.
+
 ## 1.1.1
 
 - Added: F1 opens the accessibility settings list, in the story and in menus. It has "Read voice acted lines" (off by default) and shows which speech output is in use.

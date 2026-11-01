@@ -1,12 +1,15 @@
-# Brilliant Shadows Accessibility 1.1.1
+# Brilliant Shadows Accessibility 1.1.2
 
-Run **BrilliantShadowsAccessibilityInstaller.exe** to install, update, repair, or uninstall. Close the game first. You can still install by hand from BrilliantShadowsAccessibility.zip; see the README.
+Run **BrilliantShadowsAccessibilityInstaller.exe** to install or update. Close the game first. You can still install by hand from the zip; see the README.
 
 ## Changes
 
-- Added: F1 opens the accessibility settings list, in the story and in menus, with "Read voice acted lines" (off by default).
-- Added: Q opens the in-scene buttons during the story: Rewind, Skip and Pause menu.
-- Added: when a prompt or the pause menu closes, the mod says what you were on before it.
-- Fixed: the volume sliders now control the game's real Music, Sound and Voice volumes. The music level you chose in 1.0 is moved to the real setting the first time the game starts.
-- Fixed: H now hides the text window, and H, Enter or Space shows it again.
-- Fixed: a stuck Alt key after Alt+Tab or Alt+F4 no longer stops every key from working.
+- When the main menu has been read, the mod tells you if a newer version is out, without cutting off what's being read. Run the installer to update. r repeats it until the story starts.
+- The installer accepts itch.io and DRM-free copies of the game. It doesn't find them by itself, so use Browse to pick the game folder. The mod has only been tested with the Steam version, and the installer says so.
+- The README has been reorganized, with installer, manual and developer instructions, and links to the Discord and Ko-fi.
+
+
+## Links
+
+- Join the Discord to chat, get help or report problems: <https://discord.gg/KNDXhztGGK>
+- Support shaysters on Ko-fi: <https://ko-fi.com/shaysters>
